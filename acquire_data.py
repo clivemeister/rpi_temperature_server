@@ -8,6 +8,7 @@ import sys
 import logging
 import getopt
 import time
+from sensor import Temperature_sensor
 
 logging.basicConfig(level=logging.DEBUG,
                     format="%(asctime)s %(levelname)s %(message)s",
@@ -42,14 +43,16 @@ def main(argv=None):
 
     logging.info("Starting run with interval time of {} seconds for {} iterations".format(pause_time, max_iterations))
 
-    read_sensors()
-    store_sensor_readings()
+    sensor_list = [Temperature_sensor("thermometer 1"),Temperature_sensor("thermometer 2")]
+
+    sensor_readings = read_sensors(sensor_list)
+    store_sensor_readings(sensor_readings)
     iteration = 1    # count for current iteration
     while max_iterations==-1 or iteration<max_iterations:
         logging.info("Pausing for {} seconds".format(pause_time))
         time.sleep(pause_time)
-        read_sensors()
-        store_sensor_readings()
+        sensor_readings = read_sensors(sensor_list)
+        store_sensor_readings(sensor_readings)
         iteration += 1   # starting next iteration
         logging.info("Completed iteration {}".format(iteration))
 
@@ -82,12 +85,15 @@ def parse_args(opts, args):
     return
 
 
-def read_sensors():
+def read_sensors(sensor_list):
     logging.info(">>reading sensors")
-    return
+    sensor_readings=[]
+    for s in sensor_list:
+        sensor_readings.append(s.get_reading())
+    return sensor_readings
 
-def store_sensor_readings():
-    logging.info(">>storing sensor readings")
+def store_sensor_readings(sensor_readings):
+    logging.info(">>storing sensor readings: {}".format(sensor_readings))
     return
 
 if __name__ == '__main__':
