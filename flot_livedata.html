@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>Flot Examples: AJAX</title>
+	<link href="../examples.css" rel="stylesheet" type="text/css">
+	<!--[if lte IE 8]><script language="javascript" type="text/javascript" src="../../excanvas.min.js"></script><![endif]-->
+    	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.time.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.axislabels.js"></script>
+	<script type="text/javascript">
+	$(function() {
+		var options = {
+			lines: {
+				show: true
+			},
+			points: {
+				show: true
+			},
+			xaxis: {
+				mode: "time",
+				tickSize: [15,"second"]
+			}
+		};
+		var data = [];
+		$.plot("#placeholder", data, options);
+		// Fetch one series, adding to what we already have
+		var alreadyFetched = {};
+		$("button.fetchSeries").click(function () {
+			var button = $(this);
+			// Find the URL in the link right next to us, then fetch the data
+			var dataurl = button.siblings("a").attr("href");
+			function onDataReceived(series) {
+				// Extract the first coordinate pair; jQuery has parsed it, so
+				// the data is now just an ordinary JavaScript object
+				var d = new Date(series.data[0][0])
+				var firstcoordinate = "(" + d.toISOString() + ", " + series.data[0][1] + ")";
+				button.siblings("span").text("Fetched " + series.label + ", first point: " + firstcoordinate);
+				// Push the new data onto our existing data array
+				if (!alreadyFetched[series.label]) {
+					alreadyFetched[series.label] = true;
+					data.push(series);
+				}
+				$.plot("#placeholder", data, options);
+			}
+			$.ajax({
+				url: dataurl,
+				type: "GET",
+				dataType: "json",
+				success: onDataReceived
+			});
+		});
+		// Initiate a recurring data update
+		$("button.dataUpdate").click(function () {
+			data = [];
+			alreadyFetched = {};
+			$.plot("#placeholder", data, options);
+			var iteration = 0;
+			function fetchData() {
+				++iteration;
+				function onDataReceived(series) {
+					// Load all the data in one pass; if we only got partial
+					// data we could merge it with what we already have.
+					data = [ series ];
+					$.plot("#placeholder", data, options);
+				}
+				// Normally we call the same URL - a script connected to a
+				// database - but in this case we only have static example
+				// files, so we need to modify the URL.
+				$.ajax({
+					url: "data-eu-gdp-growth-" + iteration + ".json",
+					type: "GET",
+					dataType: "json",
+					success: onDataReceived
+				});
+				if (iteration < 5) {
+					setTimeout(fetchData, 1000);
+				} else {
+					data = [];
+					alreadyFetched = {};
+				}
+			}
+			setTimeout(fetchData, 1000);
+		});
+		// Load the first series by default, so we dont have an empty plot
+		$("button.fetchSeries:first").click();
+		// Add the Flot version string to the footer
+		$("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
+	});
+	</script>
+</head>
+<body>
+	<div id="header">
+		<h2>AJAX</h2>
+	</div>
+	<div id="content">
+		<div class="demo-container">
+			<div id="placeholder" style="width:850px;height:450px"></div>
+		</div>
+		<p>Example of loading data dynamically with AJAX. Served from cherrypy web server - both web page and JSON. (source: <a href="http://epp.eurostat.ec.europa.eu/tgm/table.do?tab=table&init=1&plugin=1&language=en&pcode=tsieb020">Eurostat</a>). Click the buttons below:</p>
+		<p>The data is fetched over HTTP, in this case directly from text files. Usually the URL would point to some web server handler (e.g. a PHP page or Java/.NET/Python/Ruby on Rails handler) that extracts it from a database and serializes it to JSON.</p>
+		<p>
+			<button class="fetchSeries">First thermometer</button>
+			[ <a href="http://127.0.0.1:8080/json/?n=10&sensor_name=thermometer%201">see data</a> ]
+			<span></span>
+		</p>
+		<p>
+			<button class="fetchSeries">Second thermometer</button>
+			[ <a href="http://127.0.0.1:8080/json/?n=10&sensor_name=thermometer%202">see data</a> ]
+			<span></span>
+		</p>
+		<p>
+			<button class="fetchSeries">Third dataset</button>
+			[ <a href="http://www.flotcharts.org/flot/examples/ajax/data-usa-gdp-growth.json">see data</a> ]
+			<span></span>
+		</p>
+		<p>If you combine AJAX with setTimeout, you can poll the server for new data.</p>
+		<p>
+			<button class="dataUpdate">Poll for data</button>
+		</p>
+	</div>
+	<div id="footer">
+		Copyright &copy; 2007 - 2014 IOLA and Ole Laursen
+	</div>
+</body>
+</html>

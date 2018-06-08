@@ -2,8 +2,8 @@
 """
 import sqlite3
 
-from sensor import SensorReading
-
+from datetime import datetime
+from sensorReading import SensorReading
 
 class SensorStore(object):
 
@@ -39,7 +39,9 @@ class SensorStore(object):
         return
 
     def get_readings(self, count=10):
-        """Retrieve the most recent <count> readings (default 10) from the store"""
+        """Retrieve the most recent <count> readings (default 10) from the store
+           Returns: a list of SensorReading
+        """
         rdr = []
         try:
             with self.db:
@@ -49,7 +51,7 @@ class SensorStore(object):
                                     ORDER BY created_at DESC
                                     LIMIT ?''', (count,))
                 for row in cursor:
-                    rdr.append(SensorReading(s_name=row[0], s_type=row[2], timestamp=row[1], value=row[3]))
+                    rdr.append(SensorReading(s_name=row[0], s_type=row[2], timestamp=datetime.strptime(row[1],"%Y-%m-%d %H:%M:%S.%f"), value=row[3]))
         except Exception as e:
             # TODO do better error processing if no data retrieved from db
             raise e
@@ -74,7 +76,7 @@ class SensorStore(object):
                                     LIMIT ?''', (sensor_name, count)
                                )
                 for row in cursor:
-                    rdr.append(SensorReading(s_name=row[0], s_type=row[2], timestamp=row[1], value=row[3]))
+                    rdr.append(SensorReading(s_name=row[0], s_type=row[2], timestamp=datetime.strptime(row[1],"%Y-%m-%d %H:%M:%S.%f"), value=row[3]))
         except Exception as e:
             # TODO do better error processing if no data retrieved from db
             raise e
