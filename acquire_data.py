@@ -49,7 +49,6 @@ def main(argv=None):
     logging.info("Starting run with interval time of {} seconds for {} iterations".format(pause_time, max_iterations))
     store = SensorStore()
 
-    # TODO switch to real sensors
     sensor_list = [TemperatureSensor("thermometer 1"), TemperatureSensor("thermometer 2")]
 
     iteration = 1    # count for current iteration
@@ -62,10 +61,9 @@ def main(argv=None):
         iteration += 1   # starting next iteration
         logging.info("Completed iteration {}".format(iteration))
 
-    # TODO here we should be streaming the data back to the server
     readings = store.get_readings_as_dicts(10)
     print("Read back last few readings:")
-    print(json.dumps(readings, indent=2))
+    [print(r) for r in readings]
         
     store.close()
     return

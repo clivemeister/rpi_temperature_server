@@ -51,7 +51,11 @@ class JSONGeneratorWebService(object):
         cherrypy.session.pop('mystring', None)
 
 @cherrypy.expose
-class Root(object): pass
+class Root(object):
+    @cherrypy.expose
+    def index(self):
+        return "Hello World!"
+
 
 def read_and_store_sensors():
     logging.info("reading the sensors and writing to the database")
@@ -104,6 +108,9 @@ if __name__ == '__main__':
     cherrypy.tree.mount(JSONGeneratorWebService(), '/json', json_conf)
     # Attach the file serving application
     cherrypy.tree.mount(Root(), '/', html_conf)
+
+    # Bind to all IP addresses (accessible locally through 127.0.0.1)
+    cherrypy.server.socket_host = '0.0.0.0'
 
     # Boot up the web server
     cherrypy.engine.start()

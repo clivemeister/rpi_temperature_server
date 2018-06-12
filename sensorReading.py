@@ -30,4 +30,3 @@ class SensorReading(object):
     def as_dict(self):
         return {'name': self.sensor_name, 'type': self.sensor_type, 'timestamp': self.timestamp, 'value': self.value}
 
-# TODO implement as_JSON() method for SensorReading class
