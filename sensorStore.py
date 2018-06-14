@@ -51,7 +51,7 @@ class SensorStore(object):
                                     ORDER BY created_at DESC
                                     LIMIT ?''', (count,))
                 for row in cursor:
-                    rdr.append(SensorReading(s_name=row[0], s_type=row[2], timestamp=datetime.strptime(row[1],"%Y-%m-%d %H:%M:%S.%f"), value=row[3]))
+                    rdr.insert(0, SensorReading(s_name=row[0], s_type=row[2], timestamp=datetime.strptime(row[1],"%Y-%m-%d %H:%M:%S.%f"), value=row[3]))
         except Exception as e:
             # TODO do better error processing if no data retrieved from db
             raise e
@@ -76,7 +76,7 @@ class SensorStore(object):
                                     LIMIT ?''', (sensor_name, count)
                                )
                 for row in cursor:
-                    rdr.append(SensorReading(s_name=row[0], s_type=row[2], timestamp=datetime.strptime(row[1],"%Y-%m-%d %H:%M:%S.%f"), value=row[3]))
+                    rdr.insert(0, SensorReading(s_name=row[0], s_type=row[2], timestamp=datetime.strptime(row[1],"%Y-%m-%d %H:%M:%S.%f"), value=row[3]))
         except Exception as e:
             # TODO do better error processing if no data retrieved from db
             raise e
