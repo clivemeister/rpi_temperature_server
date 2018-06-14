@@ -55,9 +55,9 @@ class TemperatureSensor(Sensor):
             if temp > 0x7FF:
                     temp = temp-4096;
             temperature = float(temp) * 0.0625
-        except:
-            print("Using randint(-5,25) for temperature reading")
+        except ModuleNotFoundError:
             temperature = random.randint(-5,25)
+            # print("No sensor.  Using randint(-5,25)=%i for temperature reading"%(temperature))
         
         r = SensorReading(s_name=self.name, s_type=self.sensor_type,
                           timestamp=datetime.now(), value=temperature)
