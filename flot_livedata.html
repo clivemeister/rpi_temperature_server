@@ -5,10 +5,9 @@
 	<title>Flot Examples: AJAX</title>
 	<link href="../examples.css" rel="stylesheet" type="text/css">
 	<!--[if lte IE 8]><script language="javascript" type="text/javascript" src="../../excanvas.min.js"></script><![endif]-->
-    	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.time.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.axislabels.js"></script>
 	<script type="text/javascript">
 	$(function() {
 		var options = {
@@ -51,42 +50,64 @@
 				success: onDataReceived
 			});
 		});
+
 		// Initiate a recurring data update
+		totalPoints = 15		// maximum datapoints plotted
 		$("button.dataUpdate").click(function () {
-			data = [];
-			alreadyFetched = {};
-			$.plot("#placeholder", data, options);
-			var iteration = 0;
+			// Find the URL in the link right next to us, then fetch the data
+			var button = $(this);
+			var dataurl = button.siblings("a").attr("href");
+
+			dataFetched = [];
+			// start the plot with no data so far
+			var plot = $.plot("#placeholder", dataFetched, options);
+
 			function fetchData() {
-				++iteration;
-				function onDataReceived(series) {
-					// Load all the data in one pass; if we only got partial
-					// data we could merge it with what we already have.
-					data = [ series ];
-					$.plot("#placeholder", data, options);
+
+				function includedTimestamp(arr, obj) {
+				    // compare arr  of [timestamp,value] elemts with obj of [timestamp, value]
+				    // return true if obj's timestamp is already in the list, else false
+					for (var i=0; i<arr.length; i++) {
+						if (arr[i][0] == obj[0]) return true;
+					}
+					return false;
 				}
-				// Normally we call the same URL - a script connected to a
-				// database - but in this case we only have static example
-				// files, so we need to modify the URL.
+
+				function onDataReceived(newData) {
+				    // trim the data list if it's getting too long
+				    if (dataFetched.length > 15) {
+				        dataFetched = dataFetched.slice(5)
+				    }
+
+					// Add in the new data at the end (if it's not there already)
+					for (var i=0; i<newData.data.length; i++) {
+					    var thisElem = newData.data[i]
+						if (includedTimestamp(dataFetched, thisElem) == false) {
+							dataFetched.push(thisElem)
+						}
+					}
+
+					// plot the data
+					var plotData = [ {'label':newData.label, 'data':dataFetched} ];
+				    $.plot("#placeholder", plotData, options);
+				}
+
+				// fetch some more data, calling onDataReceived() when it gets back to us
 				$.ajax({
-					url: "data-eu-gdp-growth-" + iteration + ".json",
+					url: dataurl,
 					type: "GET",
 					dataType: "json",
 					success: onDataReceived
 				});
-				if (iteration < 5) {
-					setTimeout(fetchData, 1000);
-				} else {
-					data = [];
-					alreadyFetched = {};
-				}
+
+				setTimeout(fetchData, 5000);  // after a few seconds timeout, cause fetchData() to be called again
 			}
-			setTimeout(fetchData, 1000);
+
+			setTimeout(fetchData, 1000);  // runs the first time through from here
 		});
+
 		// Load the first series by default, so we dont have an empty plot
 		$("button.fetchSeries:first").click();
-		// Add the Flot version string to the footer
-		$("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
 	});
 	</script>
 </head>
@@ -98,11 +119,11 @@
 		<div class="demo-container">
 			<div id="placeholder" style="width:850px;height:450px"></div>
 		</div>
-		<p>Example of loading data dynamically with AJAX. Served from cherrypy web server - both web page and JSON. (source: <a href="http://epp.eurostat.ec.europa.eu/tgm/table.do?tab=table&init=1&plugin=1&language=en&pcode=tsieb020">Eurostat</a>). Click the buttons below:</p>
-		<p>The data is fetched over HTTP, in this case directly from text files. Usually the URL would point to some web server handler (e.g. a PHP page or Java/.NET/Python/Ruby on Rails handler) that extracts it from a database and serializes it to JSON.</p>
+		<p>Example of loading data dynamically with AJAX. Served from cherrypy web server - both web page and JSON. Click the buttons below:</p>
+		<p>The data is fetched over HTTP, in this case from a RESTful API as JSON from a "iot device" with a web server on it.</p>
 		<p>
 			<button class="fetchSeries">First thermometer</button>
-			[ <a href="http://127.0.0.1:8080/json/?n=10&sensor_name=thermometer%201">see data</a> ]
+			[ <a href="http://127.0.0.1:8080/json/?n=15&sensor_name=thermometer%201">see data</a> ]
 			<span></span>
 		</p>
 		<p>
@@ -110,14 +131,11 @@
 			[ <a href="http://127.0.0.1:8080/json/?n=10&sensor_name=thermometer%202">see data</a> ]
 			<span></span>
 		</p>
-		<p>
-			<button class="fetchSeries">Third dataset</button>
-			[ <a href="http://www.flotcharts.org/flot/examples/ajax/data-usa-gdp-growth.json">see data</a> ]
-			<span></span>
-		</p>
 		<p>If you combine AJAX with setTimeout, you can poll the server for new data.</p>
 		<p>
 			<button class="dataUpdate">Poll for data</button>
+            [ <a href="http://127.0.0.1:8080/json/?n=5&sensor_name=thermometer%201">see data</a> ]
+            <span></span>
 		</p>
 	</div>
 	<div id="footer">
