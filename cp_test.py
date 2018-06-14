@@ -54,7 +54,7 @@ class JSONGeneratorWebService(object):
 class Root(object):
     @cherrypy.expose
     def index(self):
-        return "Hello World!"
+        return "Hello World! <br>You might want to check out <a href='flot_livedata.html'>flot_livedata.html</a> to see the graphs and cool stuff."
 
 
 def read_and_store_sensors():
@@ -62,7 +62,6 @@ def read_and_store_sensors():
 
     store = SensorStore()
 
-    # TODO switch to real sensors
     sensor_list = [TemperatureSensor("thermometer 1"), TemperatureSensor("thermometer 2")]
 
     # Read the sensors
@@ -109,7 +108,7 @@ if __name__ == '__main__':
     # Attach the file serving application
     cherrypy.tree.mount(Root(), '/', html_conf)
 
-    # Bind to all IP addresses (accessible locally through 127.0.0.1)
+    # Bind to all IP addresses (accessible locally in browser at 127.0.0.1)
     cherrypy.server.socket_host = '0.0.0.0'
 
     # Boot up the web server
