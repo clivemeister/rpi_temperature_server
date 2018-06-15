@@ -1,0 +1,128 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<style>
+#fridge {
+    float: left;
+    width: 420px;
+    height: 255px;
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid black;
+}
+#table {
+    float: left;
+    width: 330px;
+    height: 135px;
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid black;
+}
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+<script>
+	var fridge_canCount=4
+	var fridgeCapacity=10
+	function allowDrop(ev) {
+		ev.preventDefault();
+	}
+	function allowDropInFridge(ev) {
+		if (fridge_canCount<fridgeCapacity) {
+			ev.preventDefault();
+		}
+	}
+
+	function dragFromFridge(ev) {
+		ev.dataTransfer.setData("text/plain", ev.target.id);
+		fridge_canCount--
+		$.ajax({
+			type: "POST",
+			url: "/json/dragFromFridge",
+			data: {'canType':ev.target.id, 'countChange':-1},
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+			error: function(jqXHR, status) {
+				console.log(jqXHR)
+				alert('fail in dragFromFridge POST: ' + status.code)
+			}
+		})
+	}
+	function drag(ev) {
+		ev.dataTransfer.setData("text/plain", ev.target.id);
+	}
+	function dropInFridge(ev) {
+		if (fridge_canCount<fridgeCapacity) {
+			ev.preventDefault();
+			var data = ev.dataTransfer.getData("text/plain");
+			fridge_canCount++
+			ev.target.appendChild(document.getElementById(data));
+			$.ajax({
+				type: "POST",
+				url: "/json/dropInFridge",
+				data: {'canType':ev.target.id, 'countChange':1},
+				contentType: "application/json; charset=utf-8",
+				dataType: "json",
+				error: function(jqXHR, status) {
+					console.log(jqXHR)
+					alert('fail in dropInFridge POST: ' + status.code)
+				}
+			})
+		}
+	}
+	function dropOnTable(ev) {
+		ev.preventDefault();
+		var data = ev.dataTransfer.getData("text/plain");
+		ev.target.appendChild(document.getElementById(data));
+	}
+	$(function() {
+		function addCan(canID) {
+			imgString='<img src="'+canID+'.gif" draggable="true" ondragstart="dragFromFridge(event)" id="'+canID+'" width="80" height="120">'
+			$("#fridge").append(imgString)
+			fridge_canCount++
+		}
+
+		$("button.drinkCan").click(function() {
+			$("#table img:last-child").remove()
+		})
+
+		$("button.restockRedCan").click(function() {
+			if (fridge_canCount<fridgeCapacity) {
+				addCan("red_can")
+			}
+		})
+
+		$("button.restockGreenCan").click(function() {
+			if (fridge_canCount<fridgeCapacity) {
+				$("#fridge").append('<img src="green_can.gif" draggable="true" ondragstart="dragFromFridge(event)" id="green_can" width="80" height="120">')
+				fridge_canCount++
+			}
+		})
+
+		$("button.restockBlueCan").click(function() {
+			if (fridge_canCount<fridgeCapacity) {
+				$("#fridge").append('<img src="blue_can.gif" draggable="true" ondragstart="dragFromFridge(event)" id="blue_can" width="80" height="120">')
+				fridge_canCount++
+			}
+		})
+	})
+</script>
+</head>
+<body>
+
+<h2>Drag and Drop</h2>
+<p>Drag the cans back and forth between the fridge and the table.</p>
+<h3>Fridge</h3>
+<div id="fridge" ondrop="dropInFridge(event)" ondragover="allowDropInFridge(event)">
+  <img src="red_can.gif" draggable="true" ondragstart="dragFromFridge(event)" id="red_can" width="80" height="120">
+  <img src="red_can.gif" draggable="true" ondragstart="dragFromFridge(event)" id="red_can" width="80" height="120">
+  <img src="green_can.gif" draggable="true" ondragstart="dragFromFridge(event)" id="green_can" width="80" height="120">
+  <img src="blue_can.gif" draggable="true" ondragstart="dragFromFridge(event)" id="blue_can" width="80" height="120">
+</div>
+<button class="restockRedCan">Restock red can</button>
+<button class="restockGreenCan">Restock green can</button>
+<button class="restockBlueCan">Restock blue can</button>
+<h3>Table</h3>
+<div id="table" ondrop="dropOnTable(event)" ondragover="allowDrop(event)"></div>
+<button class="drinkCan">Drink can</button>
+</body>
+</html>
