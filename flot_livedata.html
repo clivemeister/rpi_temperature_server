@@ -17,6 +17,9 @@
 			points: {
 				show: true
 			},
+			yaxis: {
+				min:-5, max:25, tickSize:5
+			},
 			xaxis: {
 				mode: "time",
 				tickSize: [15,"second"]
@@ -52,7 +55,7 @@
 		});
 
 		// Initiate a recurring data update
-		totalPoints = 15		// maximum datapoints plotted
+		maxPoints = 15		// maximum datapoints plotted
 		$("button.dataUpdate").click(function () {
 			// Find the URL in the link right next to us, then fetch the data
 			var button = $(this);
@@ -75,8 +78,8 @@
 
 				function onDataReceived(newData) {
 				    // trim the data list if it's getting too long
-				    if (dataFetched.length > 15) {
-				        dataFetched = dataFetched.slice(5)
+				    if (dataFetched.length > maxPoints ) {
+				        dataFetched = dataFetched.slice(3)
 				    }
 
 					// Add in the new data at the end (if it's not there already)

@@ -1,0 +1,7 @@
+*.*~
+*.swp
+*.db
+venv/*
+.idea/*
+__pycache__/*
+rpi_temperature_server/*

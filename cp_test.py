@@ -39,10 +39,16 @@ class JSONGeneratorWebService(object):
 
         return results
 
-    def POST(self, length=8):
-        some_string = ''.join(random.sample(string.hexdigits, int(length)))
-        cherrypy.session['mystring'] = some_string
-        return some_string
+    @cherrypy.tools.json_out()
+    def POST(self, poststring):
+        from urllib.parse import parse_qs
+        rawData = cherrypy.request.body.read()
+        parsedData = parse_qs(rawData)
+        print("Post string to /json <%s>: %s"%(poststring,parsedData))
+
+        results = dict()
+        results['green_cans']=3
+        return results
 
     def PUT(self, another_string):
         cherrypy.session['mystring'] = another_string
@@ -55,6 +61,11 @@ class Root(object):
     @cherrypy.expose
     def index(self):
         return "Hello World! <br>You might want to check out <a href='flot_livedata.html'>flot_livedata.html</a> to see the graphs and cool stuff."
+
+    def POST(self, newstring):
+        print("Post string to Root <%s>"%(newstring))
+        cherrypy.session['mystring'] = newstring 
+        return newstring
 
 
 def read_and_store_sensors():
@@ -74,8 +85,8 @@ def read_and_store_sensors():
         store.add_reading(sensor_name=r.get_name(), when=r.get_timestamp(),
                           reading_type=r.get_type(), value=r.get_value())
 
-    cherrypy.log("Completed sensor readings")
-
+    print("+",end='',flush=True);
+    
     store.close()
 
 if __name__ == '__main__':
