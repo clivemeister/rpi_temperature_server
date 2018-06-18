@@ -15,6 +15,8 @@ from sensor import TemperatureSensor
 from sensorReading import SensorReading
 from sensorStore import SensorStore
 
+from mako.template import Template
+from mako.lookup import TemplateLookup
 
 @cherrypy.expose
 class JSONGeneratorWebService(object):
@@ -58,9 +60,26 @@ class JSONGeneratorWebService(object):
 
 @cherrypy.expose
 class Root(object):
+    
+    # tell mako the list of directories in which to hunt for templates
+    mylookupdirs = TemplateLookup(directories=['./'])  
+    # get our fully-qualified domain name
+    import socket
+    myfqdn = socket.getfqdn( socket.gethostname() )     
+ 
     @cherrypy.expose
     def index(self):
         return "Hello World! <br>You might want to check out <a href='flot_livedata.html'>flot_livedata.html</a> to see the graphs and cool stuff."
+    
+    @cherrypy.expose
+    def livedata(self):
+        mytemplate = self.mylookupdirs.get_template("flot_livedata.html")
+        return mytemplate.render(fqdn=self.myfqdn)
+        
+    @cherrypy.expose
+    def fridge(self):
+        mytemplate = self.mylookupdirs.get_template("fridge.html")
+        return mytemplate.render(totalCanCount=6,redCanCount=3,greenCanCount=2,blueCanCount=1)
 
     def POST(self, newstring):
         print("Post string to Root <%s>"%(newstring))

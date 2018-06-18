@@ -21,7 +21,7 @@
 </style>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
 <script>
-	var fridge_canCount=4
+	var fridge_canCount=${totalCanCount}
 	var fridgeCapacity=10
 	function allowDrop(ev) {
 		ev.preventDefault();
@@ -113,10 +113,15 @@
 <p>Drag the cans back and forth between the fridge and the table.</p>
 <h3>Fridge</h3>
 <div id="fridge" ondrop="dropInFridge(event)" ondragover="allowDropInFridge(event)">
-  <img src="red_can.gif" draggable="true" ondragstart="dragFromFridge(event)" id="red_can" width="80" height="120">
-  <img src="red_can.gif" draggable="true" ondragstart="dragFromFridge(event)" id="red_can" width="80" height="120">
-  <img src="green_can.gif" draggable="true" ondragstart="dragFromFridge(event)" id="green_can" width="80" height="120">
-  <img src="blue_can.gif" draggable="true" ondragstart="dragFromFridge(event)" id="blue_can" width="80" height="120">
+	%for i in range(redCanCount):
+		<img src="red_can.gif" draggable="true" ondragstart="dragFromFridge(event)" id="red_can" width="80" height="120">
+	%endfor
+	%for i in range(greenCanCount):
+  		<img src="green_can.gif" draggable="true" ondragstart="dragFromFridge(event)" id="green_can" width="80" height="120">
+	%endfor
+	%for i in range(blueCanCount):
+		<img src="blue_can.gif" draggable="true" ondragstart="dragFromFridge(event)" id="blue_can" width="80" height="120">
+	%endfor
 </div>
 <button class="restockRedCan">Restock red can</button>
 <button class="restockGreenCan">Restock green can</button>

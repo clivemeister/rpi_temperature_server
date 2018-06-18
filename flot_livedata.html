@@ -126,18 +126,18 @@
 		<p>The data is fetched over HTTP, in this case from a RESTful API as JSON from a "iot device" with a web server on it.</p>
 		<p>
 			<button class="fetchSeries">First thermometer</button>
-			[ <a href="http://127.0.0.1:8080/json/?n=15&sensor_name=thermometer%201">see data</a> ]
+			[ <a href="http://${fqdn}:8080/json/?n=15&sensor_name=thermometer%201">see data</a> ]
 			<span></span>
 		</p>
 		<p>
 			<button class="fetchSeries">Second thermometer</button>
-			[ <a href="http://127.0.0.1:8080/json/?n=10&sensor_name=thermometer%202">see data</a> ]
+			[ <a href="http://${fqdn}:8080/json/?n=10&sensor_name=thermometer%202">see data</a> ]
 			<span></span>
 		</p>
 		<p>If you combine AJAX with setTimeout, you can poll the server for new data.</p>
 		<p>
 			<button class="dataUpdate">Poll for data</button>
-            [ <a href="http://127.0.0.1:8080/json/?n=5&sensor_name=thermometer%201">see data</a> ]
+            [ <a href="http://${fqdn}:8080/json/?n=5&sensor_name=thermometer%201">see data</a> ]
             <span></span>
 		</p>
 	</div>
