@@ -60,12 +60,22 @@ class TemperatureSensor(Sensor):
                     temp = temp-4096;
             temperature = float(temp) * 0.0625
         except ModuleNotFoundError:
+            minTemp=2.5
+            maxTemp=11.5
+            roomTemp=20.0
+            floorTemp=-4.0
             if (TemperatureSensor.fan_on):
-                temperature = float(TemperatureSensor.last_temp) - random.randint(15,18)/10.0
+                # We are cooling the fridge now 
+                delta = TemperatureSensor.last_temp - floorTemp
+                temperature = float(TemperatureSensor.last_temp) - delta/7.0
+                # if it's cool enough, turn off the fan
                 if (temperature <= 2.5):
                     TemperatureSensor.fan_on = False
             else:
-                temperature = float(TemperatureSensor.last_temp) + random.randint(2,5)/10.0
+                # The fridge is warming to room temp now
+                delta = roomTemp - TemperatureSensor.last_temp
+                temperature = float(TemperatureSensor.last_temp) + delta/20.0
+                # if it's getting too warm, turn the fan on again
                 if (temperature >= 11.5):
                     TemperatureSensor.fan_on = True
             TemperatureSensor.last_temp = temperature

@@ -21,6 +21,16 @@
 </style>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
 <script>
+	setTimeout(pollForBalance, 5000);  // every 5 seconds
+	myfqdn='${fqdn}'
+	function pollForBalance() {
+		$.get('http://${fqdn}:8080/fridgeAccountBalance', accountCallback);
+	}
+	function accountCallback(data, textStatus) {
+		$('#accountBalance').html("Fridge account balance: "+data+" mBTC");
+		setTimeout(pollForBalance, 5000);
+	}
+
 	var fridge_canCount=${totalCanCount}
 	var fridgeCapacity=10
 	function allowDrop(ev) {
@@ -107,8 +117,9 @@
 </head>
 <body>
 
-<h2>Drag and Drop</h2>
-<p>Drag the cans back and forth between the fridge and the table.</p>
+<h2>The Virtual Fridge</h2>
+<p>Drag the cans back and forth between the fridge and the table.
+When the cans are on the table, you can drink them!</p>
 <h3>Fridge</h3>
 <div id="fridge" ondrop="dropInFridge(event)" ondragover="allowDropInFridge(event)">
 	%for i in range(redCanCount):
@@ -121,11 +132,13 @@
 		<img src="blue_can.gif" draggable="true" ondragstart="dragFromSomewhere(event)" id="blue_can" width="80" height="120">
 	%endfor
 </div>
+<h3 id="accountBalance">Fridge account balance: ${balance} mBTC</h3>
 <button class="restockRedCan">Restock red can</button>
 <button class="restockGreenCan">Restock green can</button>
 <button class="restockBlueCan">Restock blue can</button>
+<br>
 <h3>Table</h3>
-<div id="table" ondrop="dropOnTable(event)" ondragover="allowDrop(event)"></div>
 <button class="drinkCan">Drink can</button>
+<div id="table" ondrop="dropOnTable(event)" ondragover="allowDrop(event)"></div>
 </body>
 </html>

@@ -14,12 +14,15 @@ import cherrypy
 from sensor import TemperatureSensor
 from sensorReading import SensorReading
 from sensorStore import SensorStore
+
 from fridge import Fridge
+from account import Account
 
 from mako.template import Template
 from mako.lookup import TemplateLookup
 
 theFridge=Fridge()   # initial empty fridge, as globaly accessible variable
+theFridgeAccount=Account(initialBalance=10.0)
 
 @cherrypy.expose
 class JSONGeneratorWebService(object):
@@ -93,12 +96,20 @@ class Root(object):
         theFridge.set_blue_can(n=1)
         print("Fridge initial stock loaded")
         mytemplate = self.mylookupdirs.get_template("fridge.html")
-        return mytemplate.render(totalCanCount=6,redCanCount=3,greenCanCount=2,blueCanCount=1)
+        return mytemplate.render(fqdn=self.myfqdn,totalCanCount=6,redCanCount=3,greenCanCount=2,blueCanCount=1,balance=theFridgeAccount.balance)
 
     def POST(self, newstring):
         print("Post string to Root <%s>"%(newstring))
         cherrypy.session['mystring'] = newstring 
         return newstring
+
+    @cherrypy.expose
+    def fridgeAccountBalance(self, *args):
+        print("Getting fridge account balance")
+        cherrypy.response.status=200
+        cherrypy.response.headers['Content-Type']='text/plain'
+        return "%.2f" % theFridgeAccount.balance
+
 
 @cherrypy.expose
 class fridgeUpdate():
@@ -110,17 +121,21 @@ class fridgeUpdate():
             canType = args[1]
             if (canType=="red_can"):
                 c=theFridge.decr_red_can()
+                theFridgeAccount.deposit(0.3)
                 cherrypy.response.status = "204 No Content"
             elif (canType=="green_can"):
                 c=theFridge.decr_green_can()
+                theFridgeAccount.deposit(0.4)
                 cherrypy.response.status = "204 No Content"
             elif (canType=="blue_can"):
                 c=theFridge.decr_blue_can()
+                theFridgeAccount.deposit(0.5)
                 cherrypy.response.status = "204 No Content"
             else:
                 cherrypy.response.status = "404 Error"
         elif (args[0]=="dropInFridge"):
             theFridge.incr_can(args[1])
+            theFridgeAccount.withdraw(0.2)
             cherrypy.response.status = "204 No Content"
         else:
             cherrypy.response.status = "404 Error"
@@ -183,6 +198,9 @@ if __name__ == '__main__':
 
     # Bind to all IP addresses (accessible locally in browser at 127.0.0.1)
     cherrypy.server.socket_host = '0.0.0.0'
+
+    # set up logging
+    cherrypy.config.update({'environment': 'staging'})
 
     # Boot up the web server
     cherrypy.engine.start()
