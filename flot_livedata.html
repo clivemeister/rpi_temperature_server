@@ -18,7 +18,7 @@
 				show: true
 			},
 			yaxis: {
-				min:-5, max:25, tickSize:5
+				min:0, max:15, tickSize:5
 			},
 			xaxis: {
 				mode: "time",
@@ -55,7 +55,7 @@
 		});
 
 		// Initiate a recurring data update
-		maxPoints = 15		// maximum datapoints plotted
+		maxPoints = 18		// maximum datapoints plotted
 		$("button.dataUpdate").click(function () {
 			// Find the URL in the link right next to us, then fetch the data
 			var button = $(this);
@@ -79,7 +79,7 @@
 				function onDataReceived(newData) {
 				    // trim the data list if it's getting too long
 				    if (dataFetched.length > maxPoints ) {
-				        dataFetched = dataFetched.slice(3)
+				        dataFetched = dataFetched.slice(2)
 				    }
 
 					// Add in the new data at the end (if it's not there already)
@@ -137,7 +137,7 @@
 		<p>If you combine AJAX with setTimeout, you can poll the server for new data.</p>
 		<p>
 			<button class="dataUpdate">Poll for data</button>
-            [ <a href="http://${fqdn}:8080/json/?n=5&sensor_name=thermometer%201">see data</a> ]
+            [ <a href="http://${fqdn}:8080/json/?n=10&sensor_name=thermometer%201">see data</a> ]
             <span></span>
 		</p>
 	</div>

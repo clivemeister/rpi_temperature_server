@@ -34,6 +34,10 @@ class TemperatureSensor(Sensor):
     """A temperature sensor"""
     sensor_type = "temperature"
 
+    # these are used when we need to fake the temperature setting
+    last_temp = 4.0  
+    fan_on = False
+
     def get_reading(self):
         temperature = 0.0
         try:
@@ -56,7 +60,15 @@ class TemperatureSensor(Sensor):
                     temp = temp-4096;
             temperature = float(temp) * 0.0625
         except ModuleNotFoundError:
-            temperature = random.randint(-5,25)
+            if (TemperatureSensor.fan_on):
+                temperature = float(TemperatureSensor.last_temp) - random.randint(15,18)/10.0
+                if (temperature <= 2.5):
+                    TemperatureSensor.fan_on = False
+            else:
+                temperature = float(TemperatureSensor.last_temp) + random.randint(2,5)/10.0
+                if (temperature >= 11.5):
+                    TemperatureSensor.fan_on = True
+            TemperatureSensor.last_temp = temperature
             # print("No sensor.  Using randint(-5,25)=%i for temperature reading"%(temperature))
         
         r = SensorReading(s_name=self.name, s_type=self.sensor_type,

@@ -14,9 +14,12 @@ import cherrypy
 from sensor import TemperatureSensor
 from sensorReading import SensorReading
 from sensorStore import SensorStore
+from fridge import Fridge
 
 from mako.template import Template
 from mako.lookup import TemplateLookup
+
+theFridge=Fridge()   # initial empty fridge, as globaly accessible variable
 
 @cherrypy.expose
 class JSONGeneratorWebService(object):
@@ -65,11 +68,18 @@ class Root(object):
     mylookupdirs = TemplateLookup(directories=['./'])  
     # get our fully-qualified domain name
     import socket
-    myfqdn = socket.getfqdn( socket.gethostname() )     
- 
+    hostname = socket.gethostname()
+    if (hostname=="FREEMACL11"):
+        # special case: running on local laptop, where firewall forces us to use loopback address
+        myfqdn= '127.0.0.1'
+    else:
+        myfqdn = socket.getfqdn( hostname )     
+    print("My fully-qualified domain name is: %s"%(myfqdn))
+
+    
     @cherrypy.expose
     def index(self):
-        return "Hello World! <br>You might want to check out <a href='flot_livedata.html'>flot_livedata.html</a> to see the graphs and cool stuff."
+        return "Hello World! <br>You might want to check out <a href='fridge'>fridge</a> to see the fridge, or <a href='livedata'>livedata</a> to see the graphs and cool stuff."
     
     @cherrypy.expose
     def livedata(self):
@@ -78,6 +88,10 @@ class Root(object):
         
     @cherrypy.expose
     def fridge(self):
+        theFridge.set_red_can(n=3)
+        theFridge.set_green_can(n=2)
+        theFridge.set_blue_can(n=1)
+        print("Fridge initial stock loaded")
         mytemplate = self.mylookupdirs.get_template("fridge.html")
         return mytemplate.render(totalCanCount=6,redCanCount=3,greenCanCount=2,blueCanCount=1)
 
@@ -86,6 +100,34 @@ class Root(object):
         cherrypy.session['mystring'] = newstring 
         return newstring
 
+@cherrypy.expose
+class fridgeUpdate():
+   @cherrypy.expose
+   def PUT(self, *args, **kw):
+        print(args, kw)
+        print("Pre-move contents: "+theFridge.status())
+        if args[0]=="dragFromFridge":
+            canType = args[1]
+            if (canType=="red_can"):
+                c=theFridge.decr_red_can()
+                cherrypy.response.status = "204 No Content"
+            elif (canType=="green_can"):
+                c=theFridge.decr_green_can()
+                cherrypy.response.status = "204 No Content"
+            elif (canType=="blue_can"):
+                c=theFridge.decr_blue_can()
+                cherrypy.response.status = "204 No Content"
+            else:
+                cherrypy.response.status = "404 Error"
+        elif (args[0]=="dropInFridge"):
+            theFridge.incr_can(args[1])
+            cherrypy.response.status = "204 No Content"
+        else:
+            cherrypy.response.status = "404 Error"
+        print("Post-move contents: "+theFridge.status())
+
+        # Possible responses are 200 (OK)  202 (Accepted)  204 (No Content)  or 404 (Error)
+        return
 
 def read_and_store_sensors():
     logging.info("reading the sensors and writing to the database")
@@ -135,6 +177,7 @@ if __name__ == '__main__':
 
     # Attach the JSON web service applications to the right places
     cherrypy.tree.mount(JSONGeneratorWebService(), '/json', json_conf)
+    cherrypy.tree.mount(fridgeUpdate(), '/fridgeupdate',json_conf)
     # Attach the file serving application
     cherrypy.tree.mount(Root(), '/', html_conf)
 
