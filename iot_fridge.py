@@ -1,7 +1,10 @@
-"""Test harness: when run as main, starts web server and kicks off background thread that reads sensors every
-few seconds, writing to database.  You can do a http GET to retrieve the last few sensor readings from the
-database as JSON.
-
+"""
+iot_fridge: when run as main, starts web server and kicks off background thread that reads sensors every
+few seconds, writing to database.  
+ - Web page /livedata does http GET to retrieve the last few sensor readings from the
+   database as JSON every few seconds.  
+ - Web page /fridge presents a virtual fridge where you can take out cans (drag and drop) and "drink" them.
+   While doing so, keeps track of cans still in fridge, and of "payment" for the different can types.
 """
 import json
 import random
@@ -47,22 +50,6 @@ class JSONGeneratorWebService(object):
 
         return results
 
-    @cherrypy.tools.json_out()
-    def POST(self, poststring):
-        from urllib.parse import parse_qs
-        rawData = cherrypy.request.body.read()
-        parsedData = parse_qs(rawData)
-        print("Post string to /json <%s>: %s"%(poststring,parsedData))
-
-        results = dict()
-        results['green_cans']=3
-        return results
-
-    def PUT(self, another_string):
-        cherrypy.session['mystring'] = another_string
-
-    def DELETE(self):
-        cherrypy.session.pop('mystring', None)
 
 @cherrypy.expose
 class Root(object):
@@ -86,11 +73,13 @@ class Root(object):
     
     @cherrypy.expose
     def livedata(self):
+        # Called to as /livedata url and returns a web page that shows the live data
         mytemplate = self.mylookupdirs.get_template("flot_livedata.html")
         return mytemplate.render(fqdn=self.myfqdn)
         
     @cherrypy.expose
     def fridge(self):
+        # Called as /fridge url to render an html template into a web page for the fridge
         theFridge.set_red_can(n=3)
         theFridge.set_green_can(n=2)
         theFridge.set_blue_can(n=1)
@@ -99,13 +88,14 @@ class Root(object):
         return mytemplate.render(fqdn=self.myfqdn,totalCanCount=6,redCanCount=3,greenCanCount=2,blueCanCount=1,balance=theFridgeAccount.balance)
 
     def POST(self, newstring):
-        print("Post string to Root <%s>"%(newstring))
+        cherrypy.log("Post string to Root <%s>"%(newstring))
         cherrypy.session['mystring'] = newstring 
         return newstring
 
     @cherrypy.expose
     def fridgeAccountBalance(self, *args):
-        print("Getting fridge account balance")
+        # This method is called by jQuery on the fridge page to GET the current balance
+        cherrypy.log("Getting fridge account balance")
         cherrypy.response.status=200
         cherrypy.response.headers['Content-Type']='text/plain'
         return "%.2f" % theFridgeAccount.balance
@@ -166,6 +156,9 @@ def read_and_store_sensors():
     store.close()
 
 if __name__ == '__main__':
+    # Global config
+    cherrypy.config.update({'environment': 'production', 'log.access_file' : '', 'access_log': None })
+    
     # Kick off the background process that reads the sensor values into the database
     pr = cherrypy.process.plugins.BackgroundTask(5,read_and_store_sensors)
     pr.start()
@@ -185,8 +178,8 @@ if __name__ == '__main__':
         '/': {
             'tools.staticdir.on': True,
             'tools.staticdir.dir': PATH,
-            'tools.staticdir.index': 'index.html'
-
+            'tools.staticdir.index': 'index.html',
+            'log.access_file':'' 
         }
     }
 
