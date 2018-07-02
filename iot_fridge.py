@@ -136,6 +136,19 @@ class Root(object):
         cherrypy.response.headers['Content-Type'] = 'text/plain'
         return repr(THE_FRIDGE.check_stock())
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def fridgeContents(self):
+        """ Called by jQuery to GET the current contents of the fridge
+        """
+        cherrypy.response.status = 200
+        cherrypy.response.headers['Content-Type'] = 'application/json'
+        results = dict()
+        results['red_can_count'] = THE_FRIDGE.get_red_can()
+        results['green_can_count'] = THE_FRIDGE.get_green_can()
+        results['blue_can_count'] = THE_FRIDGE.get_blue_can()
+        return results
+
 
 @cherrypy.expose
 class FridgeUpdate():

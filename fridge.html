@@ -98,8 +98,9 @@ function getFridgeImages(red, green, blue) {
         return canList;
 }
 
+// Anything in here is called once, after DCOM is loaded
 $( function() {
-	// Anything in here is called once, after DCOM is loaded
+
 	// fill up the fridge with the initial number of cans
         var canList=getFridgeImages( ${redCanCount}, ${greenCanCount}, ${blueCanCount} );
 	$('#fridge').html(canList);
@@ -109,6 +110,26 @@ $( function() {
 		$("#fridge").append(imgString)
 		fridge_canCount++
 	}
+        
+        function pollForContents() {
+                // check the fridge contents periodically, in case it has been restocked
+                $.ajax({
+                        type: "GET",
+                        url: "/fridgeContents",
+                        dataType: "json",
+                        success: contentsCallback,
+                        error: function(jqXHR, status, error) {
+                                console.log(jqXHR)
+                                alert('fail in pollForContents GET: ' + status.code)
+                        }
+                })
+        }
+        setTimeout(pollForContents,3000);
+        function contentsCallback(data, status, xhr) {
+                var canList=getFridgeImages( data["red_can_count"], data["green_can_count"], data["blue_can_count"] );
+                $('#fridge').html(canList);
+                setTimeout(pollForContents, 5000);
+        }
 
 	$("button.drinkCan").click(function() {
 		$("#table img:last-child").remove()
@@ -122,15 +143,13 @@ $( function() {
 
 	$("button.restockGreenCan").click(function() {
 		if (fridge_canCount<fridgeCapacity) {
-			$("#fridge").append('<img src="green_can.gif" draggable="true" ondragstart="dragFromSomewhere(event)" id="green_can" width="80" height="120">')
-			fridge_canCount++
+			addCan("green_can")
 		}
 	})
 
 	$("button.restockBlueCan").click(function() {
 		if (fridge_canCount<fridgeCapacity) {
-			$("#fridge").append('<img src="blue_can.gif" draggable="true" ondragstart="dragFromSomewhere(event)" id="blue_can" width="80" height="120">')
-			fridge_canCount++
+			addCan("blue_can")
 		}
 	})
 });
