@@ -21,14 +21,14 @@
 </style>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
 <script>
-	setTimeout(pollForBalance, 5000);  // every 5 seconds
+	setTimeout(pollForBalance, 50000);  // every 5 seconds
 	myfqdn='${fqdn}'
 	function pollForBalance() {
 		$.get('http://${fqdn}:8080/fridgeAccountBalance', accountCallback);
 	}
 	function accountCallback(data, textStatus) {
 		$('#accountBalance').html("Fridge account balance: "+data+" mBTC");
-		setTimeout(pollForBalance, 5000);
+		setTimeout(pollForBalance, 50000);
 	}
 
 	var fridge_canCount=${totalCanCount}

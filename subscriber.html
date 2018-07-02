@@ -1,0 +1,74 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+<script>
+	setTimeout(pollForRestock, 3000);  // every few seconds
+	var myfqdn='${fqdn}'
+	var state="noMission"
+	function pollForRestock() {
+		$.get('http://${fqdn}:8080/fridgeCheckRestock', restockCallback);
+	}
+	function restockCallback(data, restockNeeded) {
+		if (state==="noMission") {
+			if (data==="True") {
+				$('#restockMessage').html('Fridge needs restocking!  Select below to take this mission.');
+				$('#agreeToRestock').show()
+				$('#performRestock').hide()
+				state="restockAvailable"
+			} else {
+				$('#restockMessage').html('No mission available.  Fridges currently have enough stock.'); 
+				$('#agreeToRestock').hide()
+				$('#performRestock').hide()
+				state="noMission"
+			}
+		} else if (state==="missionUnderway") {   // we have a mission underway
+			$('#restockMessage').html('You have agreed to restock the fridge, and your bond has been placed in escrow on the blockchain.  Complete the mission for your bond to be returned, and your bounty paid out.')
+			$('#performRestock').show()
+		}
+		setTimeout(pollForRestock, 3000);
+	}
+	$(document).ready(function() {
+		$("#takeMission").click(function() {
+			$("#agreeToRestock").hide(1000)
+			state="missionUnderway"
+		})
+
+		$("#performRestock").click(function() {
+			$("#agreeToRestock").hide(1000)
+			$('#performRestock').hide()
+			$.ajax({
+				type: "PUT",
+				url: "/fridgeupdate/restockFridge/all_cans",
+				contentType: "application/json; charset=utf-8",
+				error: function(jqXHR, status) {
+					console.log(jqXHR)
+					alert('fail in performRestock PUT: ' + status.code)
+				}
+			})
+			state="noMission"
+		})
+	})
+</script>
+</head>
+<body>
+
+<h2>The Subscriber App</h2>
+<p>Subscribers are notified when the fridge needs restocking.  They can then decide to accept the restocking
+request.  Once they have done this, they use a blockchain Smart Contract to put a bond in escrow while they
+complete the restocking.  After the restocking has completed successfully, the bond is released back to them
+from escrow, and in addition the subscriber receives a bounty payment for their work.</p>
+<h3>Status message</h3>
+<div id="restockMessage">
+No status to display
+</div>
+<div id="agreeToRestock" style="display: none" >
+	<button id="takeMission">Agree to restock</button>
+</div>
+<div id="performRestock" style="display: none">
+	<button id="performMission">Complete the restock</button>
+</div>
+<h3>Wallet</h3>
+<div id="subscriberAccountBalance">0.00 mETH</div>
+</body>
+</html>
