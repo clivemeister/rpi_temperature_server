@@ -83,21 +83,26 @@ function dropOnTable(ev) {
 	ev.target.appendChild(document.getElementById(data));
 }
 
+function getFridgeImages(red, green, blue) {
+	var canList=''
+	var i
+	for (i=0; i<red; i++) {
+		canList+='<img src="red_can.gif" draggable="true" ondragstart="dragFromSomewhere(event)" id="red_can" width="80" height="120">'
+	}
+	for (i=0; i<green; i++) {
+		canList+='<img src="green_can.gif" draggable="true" ondragstart="dragFromSomewhere(event)" id="green_can" width="80" height="120">'
+	}
+	for (i=0; i<blue; i++) {
+		canList+='<img src="blue_can.gif" draggable="true" ondragstart="dragFromSomewhere(event)" id="blue_can" width="80" height="120">'
+	}
+        return canList;
+}
+
 $( function() {
 	// Anything in here is called once, after DCOM is loaded
 	// fill up the fridge with the initial number of cans
-	var canList=''
-	var i
-	for (i=0; i<${redCanCount}; i++) {
-		canList+='<img src="red_can.gif" draggable="true" ondragstart="dragFromSomewhere(event)" id="red_can" width="80" height="120">'
-	}
-	for (i=0; i<${greenCanCount}; i++) {
-		canList+='<img src="green_can.gif" draggable="true" ondragstart="dragFromSomewhere(event)" id="green_can" width="80" height="120">'
-	}
-	for (i=0; i<${blueCanCount}; i++) {
-		canList+='<img src="blue_can.gif" draggable="true" ondragstart="dragFromSomewhere(event)" id="blue_can" width="80" height="120">'
-	}
-	$('#fridge').html(canList)
+        var canList=getFridgeImages( ${redCanCount}, ${greenCanCount}, ${blueCanCount} );
+	$('#fridge').html(canList);
 
 	function addCan(canID) {
 		imgString='<img src="'+canID+'.gif" draggable="true" ondragstart="dragFromSomewhere(event)" id="'+canID+'" width="80" height="120">'
