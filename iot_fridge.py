@@ -186,6 +186,7 @@ class FridgeUpdate():
             cherrypy.response.status = "204 No Content"
         elif args[0] == "restockFridge":
             THE_FRIDGE.restock()
+            # TODO return bond, pay out the restock bonus
             cherrypy.response.status = "204 No Content"
         else:
             cherrypy.response.status = "404 Error"

@@ -23,8 +23,9 @@
 				state="noMission"
 			}
 		} else if (state==="missionUnderway") {   // we have a mission underway
+                        // TODO take the bond 
 			$('#restockMessage').html('You have agreed to restock the fridge, and your bond has been placed in escrow on the blockchain.  Complete the mission for your bond to be returned, and your bounty paid out.')
-			$('#performRestock').show()
+			$('#performRestock').show(1000)
 		}
 		setTimeout(pollForRestock, 3000);
 	}
@@ -46,6 +47,7 @@
 					alert('fail in performRestock PUT: ' + status.code)
 				}
 			})
+                        // TODO refund the bond and get the restock bonus
 			state="noMission"
 		})
 	})
