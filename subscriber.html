@@ -1,6 +1,31 @@
 <!DOCTYPE HTML>
 <html>
 <head>
+<style>
+#message {
+	padding-bottom: 50px;
+}
+
+#restockMessage {
+	font-size:150%;
+}
+#wallet {
+    float: left;
+    width: 240px;
+    height: 140px;
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid black;
+	    font-size: 150%;
+}
+#takeMission {
+	font-size: 150%
+}
+#performMission {
+	font-size: 150%
+}
+</style>
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
 <script>
 	setTimeout(pollForMission, 3000);  // every few seconds, check to see if a mission is available
@@ -34,7 +59,7 @@
                 $.get('/subscriberAccountBalance', accountCallback);
         }
         function accountCallback(data, textStatus) {
-                $('#subscriberAccountBalance').html("Subscriber account balance: "+data+" mBTC");
+                $('#subscriberAccountBalance').html("Balance: "+data+" mBTC");
                 setTimeout(pollForBalance, 5000);
         }
 
@@ -60,7 +85,8 @@
 				url: "/statusupdate/restockFridge/all_cans",
 				contentType: "application/json",
 				success: function(data, status, jqXHR) {
-					alert('Congratulations!  You have successfully restocked the fridge!  Your bond will shortly be returned, and your bonus paid out.  Thank you for your service!')
+					alert('Congratulations!  You have successfully restocked the fridge!  Your bond will shortly be returned, and your bonus paid out.  Thank you for your service!');
+					$('#performRestock').hide(1000);
 				},
 				error: function(jqXHR, status) {
 					console.log(jqXHR)
@@ -72,24 +98,32 @@
 	})
 </script>
 </head>
+
 <body>
 
-<h2>The Subscriber App</h2>
-<p>Subscribers are notified when the fridge needs restocking.  They can then decide to accept the restocking
-request.  Once they have done this, they use a blockchain Smart Contract to put a bond in escrow while they
-complete the restocking.  After the restocking has completed successfully, the bond is released back to them
+<h2>Subscriber App</h2>
+<div id="message">
+	<div id="restockMessage">
+	No status to display
+	</div>
+	<div id="agreeToRestock" style="display: none" >
+		<button id="takeMission">Agree to restock</button>
+	</div>
+	<div id="performRestock" style="display: none">
+		<button id="performMission">Complete the restock</button>
+	</div>
+</div>
+
+<div id="wallet">
+	<h3>Wallet</h3>
+	<div id="subscriberAccountBalance">0.00 mETH</div>
+</div>
+
+<h3>Small print</h3>
+<p>Subscribers are notified when the fridge needs restocking.  They can then decide
+to accept the restocking request.  Once they have done this, they use a blockchain 
+Smart Contract to put a bond in escrow while they complete the restocking.  After
+the restocking has completed successfully, the bond is released back to them
 from escrow, and in addition the subscriber receives a bounty payment for their work.</p>
-<h3>Status message</h3>
-<div id="restockMessage">
-No status to display
-</div>
-<div id="agreeToRestock" style="display: none" >
-	<button id="takeMission">Agree to restock</button>
-</div>
-<div id="performRestock" style="display: none">
-	<button id="performMission">Complete the restock</button>
-</div>
-<h3>Wallet</h3>
-<div id="subscriberAccountBalance">0.00 mETH</div>
 </body>
 </html>
