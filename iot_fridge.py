@@ -26,7 +26,9 @@ THE_FRIDGE.set_green_can(n=2)
 THE_FRIDGE.set_blue_can(n=2)
 print("Fridge initial stock loaded")  # fridge now loaded with initial stock
 
-THE_FRIDGE_ACCOUNT = Account(initialBalance=10.0)
+THE_FRIDGE_ACCOUNT = Account("fridge", initialBalance=25.0)
+THE_SUBSCRIBER_ACCOUNT = Account("subscriber", initialBalance=10.0)
+RESTOCK_BOND = 4.0
 
 @cherrypy.expose
 class JSONGeneratorWebService(object):
@@ -128,6 +130,14 @@ class Root(object):
         return "%.2f" % THE_FRIDGE_ACCOUNT.balance
 
     @cherrypy.expose
+    def subscriberAccountBalance(self):
+        """ Called by GET to return the balance in the subscriber's account
+        """
+        cherrypy.response.status = 200
+        cherrypy.response.headers['Content-Type'] = 'text/plain'
+        return "%.2f" % THE_SUBSCRIBER_ACCOUNT.balance
+
+    @cherrypy.expose
     def fridgeCheckRestock(self):
         """ Called by jQuery on the subscriber page to GET the flag that
             indicates if the fridge needs restocking
@@ -151,11 +161,39 @@ class Root(object):
 
 
 @cherrypy.expose
-class FridgeUpdate():
-    """Attached to /fridgeupdate HTTP path, so HTTP PUT with
-       various suboptions like /fridgeupdate/dragFromFridge, etc,
+class StatusUpdate():
+    """Attached to /statusupdate HTTP path, so HTTP PUT with
+       various suboptions like /statusupdate/dragFromFridge, etc,
        can update the fridge contents
     """
+    def dragFromFridge(self, can_type):
+        """Deposit the right amount in the fridge's account when we take a can from it
+        """
+        if can_type == "red_can":
+            THE_FRIDGE.decr_red_can()
+            THE_FRIDGE_ACCOUNT.deposit(0.3)
+            cherrypy.response.status = "204 No Content"
+        elif can_type == "green_can":
+            THE_FRIDGE.decr_green_can()
+            THE_FRIDGE_ACCOUNT.deposit(0.4)
+            cherrypy.response.status = "204 No Content"
+        elif can_type == "blue_can":
+            THE_FRIDGE.decr_blue_can()
+            THE_FRIDGE_ACCOUNT.deposit(0.5)
+            cherrypy.response.status = "204 No Content"
+        else:
+            cherrypy.response.status = "404 Error"
+        return
+
+    def dropInFridge(self, can_type):
+        """If we are returning a can to the fridge, we issue a small refund
+        """
+        THE_FRIDGE.incr_can(can_type)
+        THE_FRIDGE_ACCOUNT.withdraw(0.1)
+        cherrypy.response.status = "204 No Content"
+        return
+
+    #TODO call the methods by some cunning introspection
 
     @cherrypy.expose
     def PUT(self, *args, **kw):
@@ -165,31 +203,19 @@ class FridgeUpdate():
         print(args, kw)
         print("Pre-move contents: "+THE_FRIDGE.status())
         if args[0] == "dragFromFridge":
-            can_type = args[1]
-            if can_type == "red_can":
-                THE_FRIDGE.decr_red_can()
-                THE_FRIDGE_ACCOUNT.deposit(0.3)
-                cherrypy.response.status = "204 No Content"
-            elif can_type == "green_can":
-                THE_FRIDGE.decr_green_can()
-                THE_FRIDGE_ACCOUNT.deposit(0.4)
-                cherrypy.response.status = "204 No Content"
-            elif can_type == "blue_can":
-                THE_FRIDGE.decr_blue_can()
-                THE_FRIDGE_ACCOUNT.deposit(0.5)
-                cherrypy.response.status = "204 No Content"
-            else:
-                cherrypy.response.status = "404 Error"
+            self.dragFromFridge(args[1])
         elif args[0] == "dropInFridge":
-            THE_FRIDGE.incr_can(args[1])
-            THE_FRIDGE_ACCOUNT.withdraw(0.2)
+            self.dropInFridge(args[1])
+        elif args[0] == "agreeToRestock":
+            THE_SUBSCRIBER_ACCOUNT.withdraw(RESTOCK_BOND)
             cherrypy.response.status = "204 No Content"
         elif args[0] == "restockFridge":
-            THE_FRIDGE.restock()
-            # TODO return bond, pay out the restock bonus
+            cans_added = THE_FRIDGE.restock()
+            THE_SUBSCRIBER_ACCOUNT.deposit(RESTOCK_BOND)
+            THE_SUBSCRIBER_ACCOUNT.deposit(cans_added * 0.1)
             cherrypy.response.status = "204 No Content"
         else:
-            cherrypy.response.status = "404 Error"
+            eherrypy.response.status = "404 Error"
         print("Post-move contents: "+THE_FRIDGE.status())
         # Possible responses are 204 (No Content)  or 404 (Error)
         return
@@ -252,7 +278,7 @@ if __name__ == '__main__':
 
     # Attach the JSON web service applications to the right places
     cherrypy.tree.mount(JSONGeneratorWebService(), '/json', JSON_CONF)
-    cherrypy.tree.mount(FridgeUpdate(), '/fridgeupdate', JSON_CONF)
+    cherrypy.tree.mount(StatusUpdate(), '/statusupdate', JSON_CONF)
     # Attach the file serving methods
     cherrypy.tree.mount(Root(), '/', HTML_CONF)
 

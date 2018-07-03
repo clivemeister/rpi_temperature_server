@@ -21,14 +21,14 @@
 </style>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
 <script>
-setTimeout(pollForBalance, 50000);  // every 5 seconds
 myfqdn='${fqdn}'
+setTimeout(pollForBalance, 5000);  // every 5 seconds
 function pollForBalance() {
 	$.get('http://${fqdn}:8080/fridgeAccountBalance', accountCallback);
 }
 function accountCallback(data, textStatus) {
 	$('#accountBalance').html("Fridge account balance: "+data+" mBTC");
-	setTimeout(pollForBalance, 50000);
+	setTimeout(pollForBalance, 5000);
 }
 
 var fridge_canCount=${totalCanCount}
@@ -48,7 +48,7 @@ function dragFromSomewhere(ev) {
 		fridge_canCount--
 		$.ajax({
 			type: "PUT",
-			url: "/fridgeupdate/dragFromFridge/"+ev.target.id,
+			url: "/statusupdate/dragFromFridge/"+ev.target.id,
 			contentType: "application/json; charset=utf-8",
 			error: function(jqXHR, status) {
 				console.log(jqXHR)
@@ -68,7 +68,7 @@ function dropInFridge(ev) {
 		ev.target.appendChild(document.getElementById(data));
 		$.ajax({
 			type: "PUT",
-			url: "/fridgeupdate/dropInFridge/"+data,
+			url: "/statusupdate/dropInFridge/"+data,
 			contentType: "application/json; charset=utf-8",
 			error: function(jqXHR, status) {
 				console.log(jqXHR)

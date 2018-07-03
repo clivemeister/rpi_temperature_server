@@ -3,10 +3,10 @@
 <head>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
 <script>
-	setTimeout(pollForRestock, 3000);  // every few seconds
+	setTimeout(pollForMission, 3000);  // every few seconds, check to see if a mission is available
 	var myfqdn='${fqdn}'
 	var state="noMission"
-	function pollForRestock() {
+	function pollForMission() {
 		$.get('http://${fqdn}:8080/fridgeCheckRestock', restockCallback);
 	}
 	function restockCallback(data, restockNeeded) {
@@ -23,31 +23,50 @@
 				state="noMission"
 			}
 		} else if (state==="missionUnderway") {   // we have a mission underway
-                        // TODO take the bond 
 			$('#restockMessage').html('You have agreed to restock the fridge, and your bond has been placed in escrow on the blockchain.  Complete the mission for your bond to be returned, and your bounty paid out.')
 			$('#performRestock').show(1000)
 		}
-		setTimeout(pollForRestock, 3000);
+		setTimeout(pollForMission, 3000);
 	}
+
+        setTimeout(pollForBalance, 5000);  // every 5 seconds
+        function pollForBalance() {
+                $.get('/subscriberAccountBalance', accountCallback);
+        }
+        function accountCallback(data, textStatus) {
+                $('#subscriberAccountBalance').html("Subscriber account balance: "+data+" mBTC");
+                setTimeout(pollForBalance, 5000);
+        }
+
 	$(document).ready(function() {
 		$("#takeMission").click(function() {
 			$("#agreeToRestock").hide(1000)
+                        $.ajax({
+                                method: "PUT",
+                                url: "/statusupdate/agreeToRestock/",
+                                contentType: "application/json",
+                                error: function(jqXHR, status) {
+                                        console.log(jqXHR)
+                                        alert('fail in agreeToRestock PUT: ' + status.code)
+                                }
+                        })
 			state="missionUnderway"
 		})
 
 		$("#performRestock").click(function() {
 			$("#agreeToRestock").hide(1000)
-			$('#performRestock').hide()
 			$.ajax({
-				type: "PUT",
-				url: "/fridgeupdate/restockFridge/all_cans",
-				contentType: "application/json; charset=utf-8",
+				method: "PUT",
+				url: "/statusupdate/restockFridge/all_cans",
+				contentType: "application/json",
+				success: function(data, status, jqXHR) {
+					alert('Congratulations!  You have successfully restocked the fridge!  Your bond will shortly be returned, and your bonus paid out.  Thank you for your service!')
+				},
 				error: function(jqXHR, status) {
 					console.log(jqXHR)
 					alert('fail in performRestock PUT: ' + status.code)
 				}
 			})
-                        // TODO refund the bond and get the restock bonus
 			state="noMission"
 		})
 	})

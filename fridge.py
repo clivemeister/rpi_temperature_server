@@ -57,20 +57,25 @@ class Fridge():
         restock = False
         for can_type, stock_level in self.contents.items():
             restock |= (stock_level <=1)
-        cherrypy.log("Restock flag: {}".format(restock))
         self.needsRestock = restock
         return self.needsRestock
 
     def restock(self):
+        """ Restock the fridge back to standard levels
+            Returns the number of cans added
+        """
+        added_cans = 0
         for can_colour, stock_level in self.contents.items():
             if can_colour=="red_can":
                 if stock_level<4:
+                    added_cans += 4 - stock_level
                     self.contents["red_can"] = 4
             else:
                 if (stock_level<2):
+                    added_cans += 2 - stock_level
                     self.contents[can_colour] = 2
         self.needsRestock = False
-        return 
+        return added_cans
 
     def status(self):
         return repr(self.contents)
