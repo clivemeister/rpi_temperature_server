@@ -30,26 +30,32 @@
 <script>
 	setTimeout(pollForMission, 3000);  // every few seconds, check to see if a mission is available
 	var myfqdn='${fqdn}'
-	var state="noMission"
+	var prevState="null";
+	var thisState="noMission";
 	function pollForMission() {
 		$.get('http://${fqdn}:8080/fridgeCheckRestock', restockCallback);
 	}
-	function restockCallback(data, restockNeeded) {
-		if (state==="noMission") {
-			if (data==="True") {
-				$('#restockMessage').html('Fridge needs restocking!  Select below to take this mission.');
-				$('#agreeToRestock').show()
-				$('#performRestock').hide()
-				state="restockAvailable"
-			} else {
-				$('#restockMessage').html('No mission available.  Fridges currently have enough stock.'); 
-				$('#agreeToRestock').hide()
-				$('#performRestock').hide()
-				state="noMission"
+	function restockCallback(restockNeeded, data) {
+		if (restockNeeded=="True") {
+			if (thisState=="noMission") {
+				// state is changing
+				thisState="restockMissionAvailable";
+				$('#restockMessage').hide().html('Fridge needs restocking!  Select below to take this mission.').fadeIn('slow');
+				$('#agreeToRestock').show(1000);
+			} else if (thisState=="missionUnderway" && prevState!="missionUnderway") {
+				$('#restockMessage').hide().html('You have agreed to restock the fridge, and your bond has been placed in escrow on the blockchain.  Complete the mission for your bond to be returned, and your bounty paid out.').fadeIn('slow')
+				$('#performRestock').show(1000)
 			}
-		} else if (state==="missionUnderway") {   // we have a mission underway
-			$('#restockMessage').html('You have agreed to restock the fridge, and your bond has been placed in escrow on the blockchain.  Complete the mission for your bond to be returned, and your bounty paid out.')
-			$('#performRestock').show(1000)
+			prevState = thisState;
+		} else {
+			// Restock not needed.  Change msg if this is the first time we know this
+			thisState="noMission";
+			if (prevState!=="noMission") {
+				$('#restockMessage').hide().html('No mission available.  Fridges currently have enough stock.').fadeIn('slow'); 
+				$('#agreeToRestock').hide();
+				$('#performRestock').hide();
+			} 
+			prevState=thisState;
 		}
 		setTimeout(pollForMission, 3000);
 	}
@@ -65,21 +71,23 @@
 
 	$(document).ready(function() {
 		$("#takeMission").click(function() {
-			$("#agreeToRestock").hide(1000)
+			$("#agreeToRestock").hide(1000);
+			$('#restockMessage').fadeOut();
                         $.ajax({
                                 method: "PUT",
-                                url: "/statusupdate/agreeToRestock/",
+                                url: "/statusupdate/agreeToRestock/all_cans",
                                 contentType: "application/json",
                                 error: function(jqXHR, status) {
                                         console.log(jqXHR)
                                         alert('fail in agreeToRestock PUT: ' + status.code)
                                 }
                         })
-			state="missionUnderway"
+			thisState="missionUnderway"
 		})
 
-		$("#performRestock").click(function() {
-			$("#agreeToRestock").hide(1000)
+		$("#performMission").click(function() {
+			$("#performRestock").hide(1000);
+			$('#restockMessage').fadeOut();
 			$.ajax({
 				method: "PUT",
 				url: "/statusupdate/restockFridge/all_cans",
@@ -93,7 +101,7 @@
 					alert('fail in performRestock PUT: ' + status.code)
 				}
 			})
-			state="noMission"
+			thisState="noMission"
 		})
 	})
 </script>

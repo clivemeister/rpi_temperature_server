@@ -26,8 +26,9 @@ THE_FRIDGE.set_green_can(n=2)
 THE_FRIDGE.set_blue_can(n=2)
 print("Fridge initial stock loaded")  # fridge now loaded with initial stock
 
-THE_FRIDGE_ACCOUNT = Account("fridge", initialBalance=25.0)
-THE_SUBSCRIBER_ACCOUNT = Account("subscriber", initialBalance=10.0)
+FRIDGE_ACCOUNT = Account("fridge", initialBalance=25.0)
+SUBSCRIBER_ACCOUNT = Account("subscriber", initialBalance=10.0)
+ESCROW_ACCOUNT = Account("escrow", initialBalance=0.0)
 RESTOCK_BOND = 4.0
 
 @cherrypy.expose
@@ -118,7 +119,7 @@ class Root(object):
                                  redCanCount=red_cans, \
                                  greenCanCount=green_cans, \
                                  blueCanCount=blue_cans, \
-                                 balance=THE_FRIDGE_ACCOUNT.balance)
+                                 balance=FRIDGE_ACCOUNT.balance)
 
     @cherrypy.expose
     def fridgeAccountBalance(self, *args):
@@ -127,7 +128,7 @@ class Root(object):
         cherrypy.log("Getting fridge account balance")
         cherrypy.response.status = 200
         cherrypy.response.headers['Content-Type'] = 'text/plain'
-        return "%.2f" % THE_FRIDGE_ACCOUNT.balance
+        return "%.2f" % FRIDGE_ACCOUNT.balance
 
     @cherrypy.expose
     def subscriberAccountBalance(self):
@@ -135,7 +136,7 @@ class Root(object):
         """
         cherrypy.response.status = 200
         cherrypy.response.headers['Content-Type'] = 'text/plain'
-        return "%.2f" % THE_SUBSCRIBER_ACCOUNT.balance
+        return "%.2f" % SUBSCRIBER_ACCOUNT.balance
 
     @cherrypy.expose
     def fridgeCheckRestock(self):
@@ -166,34 +167,59 @@ class StatusUpdate():
        various suboptions like /statusupdate/dragFromFridge, etc,
        can update the fridge contents
     """
+    def __init__(self):
+        """ Build the dispatching dictionary that maps args passed in PUT to methods to call
+        """
+        self.commandDict = {
+            "dragFromFridge": self.dragFromFridge,
+            "dropInFridge": self.dropInFridge,
+            "restockFridge": self.restockFridge,
+            "agreeToRestock": self.agreeToRestock,
+        }   
+
     def dragFromFridge(self, can_type):
-        """Deposit the right amount in the fridge's account when we take a can from it
+        """PUT dragFromFridge command: Deposit the right amount in the fridge's account 
+           when we take a can from it
         """
         if can_type == "red_can":
             THE_FRIDGE.decr_red_can()
-            THE_FRIDGE_ACCOUNT.deposit(0.3)
+            FRIDGE_ACCOUNT.deposit(0.3)
             cherrypy.response.status = "204 No Content"
         elif can_type == "green_can":
             THE_FRIDGE.decr_green_can()
-            THE_FRIDGE_ACCOUNT.deposit(0.4)
+            FRIDGE_ACCOUNT.deposit(0.4)
             cherrypy.response.status = "204 No Content"
         elif can_type == "blue_can":
             THE_FRIDGE.decr_blue_can()
-            THE_FRIDGE_ACCOUNT.deposit(0.5)
+            FRIDGE_ACCOUNT.deposit(0.5)
             cherrypy.response.status = "204 No Content"
         else:
             cherrypy.response.status = "404 Error"
         return
-
     def dropInFridge(self, can_type):
-        """If we are returning a can to the fridge, we issue a small refund
+        """PUT dropInFridge command: If we are returning a can to the fridge, we issue a small refund
         """
         THE_FRIDGE.incr_can(can_type)
-        THE_FRIDGE_ACCOUNT.withdraw(0.1)
+        FRIDGE_ACCOUNT.withdraw(0.1)
         cherrypy.response.status = "204 No Content"
         return
-
-    #TODO call the methods by some cunning introspection
+    def restockFridge(self,null_parameter):
+        """ PUT restockFridge command: run the restock method on the fridge, return subscriber's bond
+            from escrow, and pay out their bounty (based on number of cans restocked)
+        """
+        cans_added = THE_FRIDGE.restock()
+        ESCROW_ACCOUNT.withdraw(RESTOCK_BOND)
+        SUBSCRIBER_ACCOUNT.deposit(RESTOCK_BOND)
+        SUBSCRIBER_ACCOUNT.deposit(cans_added * 0.1)
+        cherrypy.response.status = "204 No Content"
+        return
+    def agreeToRestock(self, null_parameter):
+        """ PUT agreeToRestock command: take the subscriber's bond into escrow
+        """
+        SUBSCRIBER_ACCOUNT.withdraw(RESTOCK_BOND)
+        ESCROW_ACCOUNT.deposit(RESTOCK_BOND)
+        cherrypy.response.status = "204 No Content"
+        return
 
     @cherrypy.expose
     def PUT(self, *args, **kw):
@@ -202,20 +228,10 @@ class StatusUpdate():
         """
         print(args, kw)
         print("Pre-move contents: "+THE_FRIDGE.status())
-        if args[0] == "dragFromFridge":
-            self.dragFromFridge(args[1])
-        elif args[0] == "dropInFridge":
-            self.dropInFridge(args[1])
-        elif args[0] == "agreeToRestock":
-            THE_SUBSCRIBER_ACCOUNT.withdraw(RESTOCK_BOND)
-            cherrypy.response.status = "204 No Content"
-        elif args[0] == "restockFridge":
-            cans_added = THE_FRIDGE.restock()
-            THE_SUBSCRIBER_ACCOUNT.deposit(RESTOCK_BOND)
-            THE_SUBSCRIBER_ACCOUNT.deposit(cans_added * 0.1)
-            cherrypy.response.status = "204 No Content"
+        if args[0] in self.commandDict:
+            self.commandDict[args[0]](args[1])
         else:
-            eherrypy.response.status = "404 Error"
+            cherrypy.response.status = "404 Error"
         print("Post-move contents: "+THE_FRIDGE.status())
         # Possible responses are 204 (No Content)  or 404 (Error)
         return
