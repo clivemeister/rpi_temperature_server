@@ -18,11 +18,21 @@
     border: 1px solid black;
 	    font-size: 150%;
 }
-#takeMission {
-	font-size: 150%
+.button {
+	background-color: #4CAF50;
+	border: none;
+	color: white;
+	padding: 10px;
+	text-align: center;
+	display: inline-block;
+	font-size: 24px;
+	margin: 4px 2px;
+	border-radius: 4px
 }
-#performMission {
-	font-size: 150%
+h2 {
+	background-color: darkgrey;
+	color: white;
+	text-align: center;
 }
 </style>
 
@@ -115,10 +125,10 @@
 	No status to display
 	</div>
 	<div id="agreeToRestock" style="display: none" >
-		<button id="takeMission">Agree to restock</button>
+		<button id="takeMission" class="button">Agree to restock</button>
 	</div>
 	<div id="performRestock" style="display: none">
-		<button id="performMission">Complete the restock</button>
+		<button id="performMission" class="button">Complete the restock</button>
 	</div>
 </div>
 
