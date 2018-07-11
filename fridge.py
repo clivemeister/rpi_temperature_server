@@ -62,7 +62,7 @@ class Fridge():
 
     def restock(self):
         """ Restock the fridge back to standard levels
-            Returns the number of cans added
+            Return value is the number of cans added
         """
         added_cans = 0
         for can_colour, stock_level in self.contents.items():
@@ -72,8 +72,12 @@ class Fridge():
                     self.contents["red_can"] = 4
             else:
                 if (stock_level<2):
-                    added_cans += 2 - stock_level
-                    self.contents[can_colour] = 2
+                    if (stock_level==0):
+                        count_to_add = 3
+                    else: 
+                        count_to_add = 2
+                    added_cans += count_to_add - stock_level
+                    self.contents[can_colour] = count_to_add 
         self.needsRestock = False
         return added_cans
 

@@ -19,6 +19,7 @@ from sensorStore import SensorStore
 
 from fridge import Fridge
 from account import Account
+from blockchain import isRecentBlockchainTransaction
 
 THE_FRIDGE = Fridge()   # initial empty fridge, as globaly accessible variable
 THE_FRIDGE.set_red_can(n=4)
@@ -33,7 +34,10 @@ RESTOCK_BOND = 4.0
 
 @cherrypy.expose
 class JSONGeneratorWebService(object):
-    """Web service to allow HTTP GET against fridge sensor readings database
+    """Web service to allow HTTP GET against fridge sensor readings database.
+       This is set up in cherrypy using the MethodDispatcher, which maps the HTTP
+       verbs to the exposed methods of the class (i.e., to objects).  So the GET
+       verb maps to GET(self), while a POST to the url would go to POST(self).
     """
 
     @cherrypy.tools.accept(media='application/json')
@@ -120,6 +124,14 @@ class Root(object):
                                  greenCanCount=green_cans, \
                                  blueCanCount=blue_cans, \
                                  balance=FRIDGE_ACCOUNT.balance)
+    @cherrypy.expose
+    def blockchain(self):
+        """ Called as /blockchain url and returns a web page that shows
+            the progressively updating blockchain
+        """
+        print("blockchain updating")
+        mytemplate = self.mylookupdirs.get_template("blockchain.html")
+        return mytemplate.render(fqdn=self.myfqdn)
 
     @cherrypy.expose
     def fridgeAccountBalance(self, *args):
@@ -160,10 +172,20 @@ class Root(object):
         results['blue_can_count'] = THE_FRIDGE.get_blue_can()
         return results
 
+    @cherrypy.expose
+    def recentTransaction(self):
+        """ Returns 'True' if recent transaction has occurred on the blockchain, else 'False'.
+            Used so the blockchain.html javascript can notify such events by colouring a hash, 
+        """
+        print("Looking for any recent transactions")
+        cherrypy.response.status = 200
+        cherrypy.response.headers['Content-Type'] = 'text/plain'
+        return repr(isRecentBlockchainTransaction())
+    
 
 @cherrypy.expose
 class StatusUpdate():
-    """Attached to /statusupdate HTTP path, so HTTP PUT with
+    """Attached for PUTs to /statusupdate HTTP path,  with
        various suboptions like /statusupdate/dragFromFridge, etc,
        can update the fridge contents
     """
@@ -295,7 +317,7 @@ if __name__ == '__main__':
     # Attach the JSON web service applications to the right places
     cherrypy.tree.mount(JSONGeneratorWebService(), '/json', JSON_CONF)
     cherrypy.tree.mount(StatusUpdate(), '/statusupdate', JSON_CONF)
-    # Attach the file serving methods
+    # Attach the fridge serving methods
     cherrypy.tree.mount(Root(), '/', HTML_CONF)
 
     # Bind to all IP addresses (accessible locally in browser at 127.0.0.1)
