@@ -43,7 +43,7 @@ h2 {
 	var prevState="null";
 	var thisState="noMission";
 	function pollForMission() {
-		$.get('http://${fqdn}:8080/fridgeCheckRestock', restockCallback);
+		$.get('/fridgeCheckRestock', restockCallback);
 	}
 	function restockCallback(restockNeeded, data) {
 		if (restockNeeded=="True") {

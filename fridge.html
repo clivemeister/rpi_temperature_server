@@ -31,7 +31,7 @@ h2 {
 myfqdn='${fqdn}'
 setTimeout(pollForBalance, 5000);  // every 5 seconds
 function pollForBalance() {
-	$.get('http://${fqdn}:8080/fridgeAccountBalance', accountCallback);
+	$.get('/fridgeAccountBalance', accountCallback);
 }
 function accountCallback(data, textStatus) {
 	$('#accountBalance').html("Fridge account balance: "+data+" mBTC");

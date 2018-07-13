@@ -59,7 +59,7 @@ class TemperatureSensor(Sensor):
             if temp > 0x7FF:
                     temp = temp-4096;
             temperature = float(temp) * 0.0625
-        except ModuleNotFoundError:
+        except (ImportError, OSError) as e:
             minTemp=2.5
             maxTemp=11.5
             roomTemp=20.0
