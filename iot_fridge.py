@@ -6,6 +6,12 @@ reads sensors every few seconds, writing to database.
  - Web page /fridge presents a virtual fridge where you can take out cans (drag and
    drop) and "drink" them.  While doing so, keeps track of cans still in fridge, and
    of "payment" for the different can types.
+ - Web page /subscriber is for a "subscriber" who is awaiting missions to refill the
+   fridge.  When they agree to a restock mission, a bond is put in escrow on the 
+   blockchain, and this is released, together with a bounty, when the mission is complete.
+ - web page /blockchain shows the blockchain blocks filling up, being mined, and then
+   locked.  When a transaction happens locally on our system, the next hash written
+   to the "blockchain" is written in red, to hilight this for discussions.
 """
 import logging
 import os
@@ -104,6 +110,14 @@ class Root(object):
         """
         print("subscriber online")
         mytemplate = self.mylookupdirs.get_template("subscriber.html")
+        return mytemplate.render(fqdn=self.myfqdn)
+
+    @cherrypy.expose
+    def blockchain(self):
+        """ Called as /blockchain url to return the web page with this
+        """
+        print('blockchain display requested')
+        mytemplate = self.mylookupdirs.get_template("blockchain.html")
         return mytemplate.render(fqdn=self.myfqdn)
 
     @cherrypy.expose
