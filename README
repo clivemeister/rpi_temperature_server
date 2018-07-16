@@ -1,0 +1,22 @@
+Visualisation of a fridge as an IoT device. Features use of (simulated) blockchain
+to handle payments, with a "smart contract" on the blockchain holding money in escrow
+against a service being completed.  Includes a simulated App which allows an
+Uber-style model of fridge replenishment, with subscribers notified when a fridge
+is getting low, and being paid a small fee (the "bounty") when they complete the 
+restocking.  Also features some smart machine-learning style replenishment algorithms
+that look at recent consumption as a guide to future consumption, and restock the 
+most popular lines.  Finally, has a visualisation of a blockchain, with "hashes"
+appearing on the active block of the blockchain as transactions happen,  Locally
+originated transactions have their hash written in red, as a discussion point.
+
+When run on a Raspberry Pi with the appropriate sensor connected as a I2C device, 
+it can show actual temperatures from the sensor; otherwise, it shows simulated 
+temperatures.
+
+Start by    python3 iot_fridge.py
+This runs a webserver on port 8080.  Connect to (all javascript tested on Chrome):
+    http://127.0.0.1:8080/fridge         - visualisation of the fridge
+                         /subscriber     - visualisation of subscriber App
+                         /blockchain     - visualisation of blockchain
+                         /livedata       - temperature record from fridge
+
